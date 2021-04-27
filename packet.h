@@ -6,3 +6,7 @@ struct packet {
      short seq;
      char padding[3];
  };
+
+ struct ack {
+     short ack_num;
+ };

@@ -13,7 +13,7 @@
 
 
 void DieWithError(char *errorMessage);
-void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet * filePkt, float lossRatio);
+void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet * filePkt, float lossRatio, int tOut);
 
 int main(int argc, char *argv[]) {
     srand((unsigned int)time(NULL));
@@ -62,8 +62,8 @@ int main(int argc, char *argv[]) {
         if ((recvPktSize = recvfrom(sock, pkt_buff, PKTSIZE, 0, (struct sockaddr *) &clntAddr, &cliAddrLen)) < 0) {
             DieWithError("recvfrom() failed");
         }
-        
-        HandleClient(sock, clntAddr, cliAddrLen, pkt_buff, pktLossRatio);
+        // printf("NMSL: %s\n", pkt_buff->data);
+        HandleClient(sock, clntAddr, cliAddrLen, pkt_buff, pktLossRatio, timeOut);
         
     }
 }
