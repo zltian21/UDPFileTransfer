@@ -8,12 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
+#include <math.h>
 #include "packet.h"
-#include "time.h"
 
 
 void DieWithError(char *errorMessage);
-void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet * filePkt, float lossRatio, int tOut);
+void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet * filePkt, float lossRatio);
 
 int main(int argc, char *argv[]) {
     srand((unsigned int)time(NULL));
@@ -28,6 +29,9 @@ int main(int argc, char *argv[]) {
     int recvPktSize;                    // Size of received packet
     struct packet * pkt_buff;             // packet buffer
 
+    struct timeval tv;                      // Time interval
+    long micro_t_out;      // Time in microseconds
+    time_t sec_t_out;
     printf("Initiating Server...\n");
 
     if (argc != 4) {
@@ -37,8 +41,14 @@ int main(int argc, char *argv[]) {
 
     /* Assign values*/
     servPort = atoi(argv[1]);
-    timeOut = atoi(argv[2]);
+    timeOut = pow(10, atoi(argv[2]));
     pktLossRatio = atof(argv[3]);
+    
+    sec_t_out = timeOut/1000000;
+    micro_t_out = timeOut - sec_t_out*1000000;
+    
+    tv.tv_sec = sec_t_out;
+    tv.tv_usec = micro_t_out; 
 
     /* Create socket for incoming connections */
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
@@ -62,8 +72,13 @@ int main(int argc, char *argv[]) {
         if ((recvPktSize = recvfrom(sock, pkt_buff, PKTSIZE, 0, (struct sockaddr *) &clntAddr, &cliAddrLen)) < 0) {
             DieWithError("recvfrom() failed");
         }
+
+        if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
+            perror("setsockopt() Error");
+        }
         // printf("NMSL: %s\n", pkt_buff->data);
-        HandleClient(sock, clntAddr, cliAddrLen, pkt_buff, pktLossRatio, timeOut);
-        
+        HandleClient(sock, clntAddr, cliAddrLen, pkt_buff, pktLossRatio);
+        close(sock);
+	    exit(0);
     }
 }

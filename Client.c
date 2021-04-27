@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include "packet.h"
 
 void DieWithError(char *errorMessage);
@@ -16,6 +17,8 @@ int SimulateACKLoss(float ACKLossRatio);
 
 
 int main(int argc, char *argv[]) {
+    srand((unsigned int)time(NULL));
+
     int sock;                           //Socket
     struct sockaddr_in servAddr;        // Server address
     struct sockaddr_in fromAddr;        // Source address
@@ -82,18 +85,18 @@ int main(int argc, char *argv[]) {
         if (tempCount > 0 && tempSeq == expc_seq) {
             fprintf(fp, "%s", pkt_buff.data);
             expc_seq = alternateNum(expc_seq);
+            
         }
         ack_send.ack_num = htons(alternateNum(tempSeq));
-        // printf("%d %d\n", tempCount, tempSeq);
-        // printf("NMSLSL: %d\n", ntohs(ack_send.ack_num));
+        printf("%d %d\n", tempCount, tempSeq);
+            printf("NMSLSL: %d\n", ntohs(ack_send.ack_num));
         
         /* Send ACK */
-        if (SimulateACKLoss(ACKLossRatio) == 0) {
+        if (SimulateACKLoss(ACKLossRatio) == 0 && tempCount > 0) {
             if (sendto(sock, &ack_send, sizeof(ack_send), 0, (struct sockaddr *) &servAddr, sizeof(servAddr)) != sizeof(ack_send)) {
                 DieWithError("send() ACK sent a different number of bytes than expected");
             }
         }
-
     } while (tempCount > 0);
 
     fclose(fp);
