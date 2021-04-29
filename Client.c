@@ -43,8 +43,7 @@ int main(int argc, char *argv[]) {
     strcpy(pkt.data, filename);
     pkt.seq = htons(0);
     pkt.count = htons(strlen(pkt.data));
-    // printf("HEREHRE: %s\n", pkt.data);
-        //printf("IP:%s Port:%d filename:%s ACK:%f\n", servIP, servPort, filename, ACKLossRatio);
+
     /* Create a datagram/UDP socket */
     if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP))<0)
         DieWithError("socket() failed");
@@ -67,7 +66,8 @@ int main(int argc, char *argv[]) {
     short tempSeq;                      // tempoary packet sequence number
     FILE *fp;                           // File to write
     struct ack ack_send;                // ACK
-    short expc_seq = 1;                      // Expected sequence number
+    short tempACK;                      // temp ACK
+    short expc_seq = 1;                 // Expected sequence number
     
     fp = fopen("./out.txt", "w");
     printf("\n");
@@ -81,20 +81,35 @@ int main(int argc, char *argv[]) {
 
         tempSeq = ntohs(pkt_buff.seq);
         tempCount = ntohs(pkt_buff.count);
+        
         // Write file
         if (tempCount > 0 && tempSeq == expc_seq) {
             fprintf(fp, "%s", pkt_buff.data);
             expc_seq = alternateNum(expc_seq);
-            
+            printf("Packet %d received with %d data bytes\n", tempSeq, tempCount);
+            printf("Packet %d delivered to user\n", tempSeq);
+        } else if (tempCount > 0) {
+            printf("Duplicate packet %d received with %d data bytes\n", tempSeq, tempCount);
         }
-        ack_send.ack_num = htons(alternateNum(tempSeq));
+        tempACK = alternateNum(tempSeq);
+        ack_send.ack_num = htons(tempACK);
         
         // Send ACK
-        if (SimulateACKLoss(ACKLossRatio) == 0 && tempCount > 0) {
-            if (sendto(sock, &ack_send, sizeof(ack_send), 0, (struct sockaddr *) &servAddr, sizeof(servAddr)) != sizeof(ack_send)) {
-                DieWithError("send() ACK sent a different number of bytes than expected");
+        if (tempCount > 0) {
+            printf("ACK %d generated for transmission\n", tempACK);
+            if (SimulateACKLoss(ACKLossRatio) == 0) {
+                if (sendto(sock, &ack_send, sizeof(ack_send), 0, (struct sockaddr *) &servAddr, sizeof(servAddr)) != sizeof(ack_send)) {
+                    DieWithError("send() ACK sent a different number of bytes than expected");
+                }
+                printf("ACK %d successfully transmitted\n", tempACK);
+            } else {
+                printf("ACK %d lost\n", tempACK);
             }
+        } else {
+            printf("End of Transmission Packet with sequence number %d received\n", tempSeq);
         }
+
+        printf("\n");
     } while (tempCount > 0);
 
     fclose(fp);

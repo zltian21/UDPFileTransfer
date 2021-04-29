@@ -101,6 +101,8 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
     printf("End of Transmission Packet with sequence number %d transmitted\n\n\n", seq_num);
     fclose(fp);
 
+
+    /* Printing Summary */
     printf("Server Summary\n");
     printf("=====================================================================\n");
     printf("Number of data packets generated for transmission (initial only): %d\n", num_of_pkt);
@@ -114,7 +116,3 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
     // Question: EOT also loss?
     
 }
-
-// void sendPacket(int servSocket, struct packet pkt, ) {
-
-// }
