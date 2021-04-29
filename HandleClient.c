@@ -27,6 +27,8 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
     struct packet pkt;                      // Packet to send
     struct ack ack_recv;                    // ACK received
     int recvACKSize;                        // ACK received size
+    
+    // Attributes for printing Summary
     int num_of_pkt = 0;                     // number of data packets (initial only)
     int total_num_pkt = 0;                  // total number of data packets (include initial and generated)
     int total_pkt_bytes = 0;                // total bytes of data packets (initial only)
