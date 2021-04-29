@@ -28,19 +28,19 @@ Server: Server.o DieWithError.o HandleClient.o Simulation.o
 Client: Client.o DieWithError.o Simulation.o
 
 DieWithError.o: DieWithError.c
-	CC -c DieWithError.c
+	$(CC) -c DieWithError.c
 
 Simulation.o: Simulation.c
-	CC -c Simulation.c
+	$(CC) -c Simulation.c
 
 Server.o: Server.c packet.h
-	CC -c Server.c
+	$(CC) -c Server.c
 
 HandleClient.o: HandleClient.c packet.h
-	CC -c HandleClient.c
+	$(CC) -c HandleClient.c
 
 Client.o: Client.c packet.h
-	CC -c Client.c
+	$(CC) -c Client.c
 
 clean:
 	rm -f Server Client out.txt *.o
