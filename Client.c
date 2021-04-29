@@ -81,17 +81,15 @@ int main(int argc, char *argv[]) {
 
         tempSeq = ntohs(pkt_buff.seq);
         tempCount = ntohs(pkt_buff.count);
-        /* write file */
+        // Write file
         if (tempCount > 0 && tempSeq == expc_seq) {
             fprintf(fp, "%s", pkt_buff.data);
             expc_seq = alternateNum(expc_seq);
             
         }
         ack_send.ack_num = htons(alternateNum(tempSeq));
-        printf("%d %d\n", tempCount, tempSeq);
-            printf("NMSLSL: %d\n", ntohs(ack_send.ack_num));
         
-        /* Send ACK */
+        // Send ACK
         if (SimulateACKLoss(ACKLossRatio) == 0 && tempCount > 0) {
             if (sendto(sock, &ack_send, sizeof(ack_send), 0, (struct sockaddr *) &servAddr, sizeof(servAddr)) != sizeof(ack_send)) {
                 DieWithError("send() ACK sent a different number of bytes than expected");
