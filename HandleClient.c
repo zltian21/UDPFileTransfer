@@ -11,24 +11,24 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
 #define BUFFERSIZE 81 //80 printable character and 1 null terminating character 
 
-void DieWithError(char *errorMessage);
-int SimulateLoss(float pktLossRatio);
-short alternateNum(short n);
+void DieWithError(char *errorMessage);          // Report Error
+int SimulateLoss(float pktLossRatio);           // Data packet loss simulation
+short alternateNum(short n);                    // Alternate number between 0 and 1: 0 -> 1; 1 -> 0
 
-void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet * filePkt, float lossRatio) {
+void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet filePkt, float lossRatio) {
     
+    /* Attrubutes for sending data packets and receiving ACK packets */
     FILE *fp;                               // File to read
     char buff[BUFFERSIZE];                  // Buffer to save read line
     short seq_num = 1;                      // Sequence number
-    short data_size;
+    short data_size;                        // Size of data in a packet
     struct packet pkt;                      // Packet to send
     struct ack ack_recv;                    // ACK received
     int recvACKSize;                        // ACK received size
     
-    // Attributes for printing Summary
+    /* Attributes for printing Summary */
     int num_of_pkt = 0;                     // number of data packets (initial only)
     int total_num_pkt = 0;                  // total number of data packets (include initial and generated)
     int total_pkt_bytes = 0;                // total bytes of data packets (initial only)
@@ -37,14 +37,16 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
     int ack_received = 0;                   // number of ACK received
     int count_timeout = 0;                  // timeout times
     
-    fp = fopen(filePkt->data, "r");
+    /* Open file to read */
+    fp = fopen(filePkt.data, "r");
     if(fp == NULL) {
         DieWithError("fopen() Error");
     }
     printf("\n");
 
-    /* Send file packet */
+    /* Read Line, Send data packets, Receive ACK */
     while (fgets(buff, BUFFERSIZE, fp) != NULL) {
+        // Set Data Packet
         data_size = strlen(buff);
         pkt.seq = htons(seq_num);
         pkt.count = htons(data_size);
@@ -67,18 +69,18 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
         }
 
         // Waiting for ACK
-        while((recvACKSize = recvfrom(servSocket, &ack_recv, sizeof(ack_recv), 0, (struct sockaddr *) &clntAdd, &clnAddrLen)) < 0) {
+        while((recvACKSize = recvfrom(servSocket, &ack_recv, sizeof(ack_recv), 0, (struct sockaddr *) &clntAdd, &clnAddrLen)) < 0) { // wait for timeout
             printf("    Timeout expired for packet numbered %d\n", seq_num);
             count_timeout++;
             printf("Packet %d generated for re-transmission with %d data bytes\n", seq_num, data_size);
             total_num_pkt++;
-            if (SimulateLoss(lossRatio) == 0) {
+            if (SimulateLoss(lossRatio) == 0) {// packet send successfully
                 if (sendto(servSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *) &clntAdd, clnAddrLen) != sizeof(pkt)) {
                     DieWithError("sendto() sent a different number of bytes than expected");
                 }
                 printf("    Packet %d successfully transmitted with %d data bytes\n", seq_num, data_size);
                 packet_success++;
-            } else {
+            } else {    // packet loss
                 packet_loss++;
                 printf("    Packet %d lost\n", seq_num);
             }

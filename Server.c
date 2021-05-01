@@ -14,7 +14,7 @@
 
 
 void DieWithError(char *errorMessage);
-void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet * filePkt, float lossRatio);
+void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet filePkt, float lossRatio);
 
 int main(int argc, char *argv[]) {
     srand((unsigned int)time(NULL));
@@ -27,8 +27,7 @@ int main(int argc, char *argv[]) {
     int timeOut;                        // Time our
     float pktLossRatio;                 // Packet Loss Ratio
     int recvPktSize;                    // Size of received packet
-    struct packet * pkt_buff;             // packet buffer
-
+    struct packet pkt_buff;             // packet buffer
     struct timeval tv;                      // Time interval
     long micro_t_out;      // Time in microseconds
     time_t sec_t_out;
@@ -68,9 +67,10 @@ int main(int argc, char *argv[]) {
     for (;;) {
         /* Set the size of the in-out parameter */
         cliAddrLen = sizeof(clntAddr);
-        // TODO: receive from client
-        if ((recvPktSize = recvfrom(sock, pkt_buff, PKTSIZE, 0, (struct sockaddr *) &clntAddr, &cliAddrLen)) < 0) {
-            DieWithError("recvfrom() failed");
+
+        if ((recvPktSize = recvfrom(sock, &pkt_buff, PKTSIZE, 0, (struct sockaddr *) &clntAddr, &cliAddrLen)) < 0) {
+            printf("HERE: %d\n", recvPktSize);
+            DieWithError("filename recvfrom() failed");
         }
 
         if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
