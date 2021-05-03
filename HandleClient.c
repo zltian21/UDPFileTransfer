@@ -57,19 +57,19 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
         num_of_pkt++;
         total_num_pkt++;
         total_pkt_bytes += data_size;
-        if (SimulateLoss(lossRatio) == 0) {
+        if (SimulateLoss(lossRatio) == 0) { // Packet send successfully 
             if (sendto(servSocket, &pkt, sizeof(pkt), 0, (struct sockaddr *) &clntAdd, clnAddrLen) != sizeof(pkt)) {
                 DieWithError("sendto() sent a different number of bytes than expected");
             }
             printf("    Packet %d successfully transmitted with %d data bytes\n", seq_num, data_size);
             packet_success++;
-        } else {
+        } else { // packet loss
             packet_loss++;
             printf("    Packet %d lost\n", seq_num);
         }
 
         // Waiting for ACK
-        while((recvACKSize = recvfrom(servSocket, &ack_recv, sizeof(ack_recv), 0, (struct sockaddr *) &clntAdd, &clnAddrLen)) < 0) { // wait for timeout
+        while((recvACKSize = recvfrom(servSocket, &ack_recv, sizeof(ack_recv), 0, (struct sockaddr *) &clntAdd, &clnAddrLen)) < 0) { // if timeout
             printf("    Timeout expired for packet numbered %d\n", seq_num);
             count_timeout++;
             printf("Packet %d generated for re-transmission with %d data bytes\n", seq_num, data_size);
@@ -87,7 +87,6 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
         }
         ack_received++;
         printf("    ACK %d received\n", ntohs(ack_recv.ack_num));
-
         
         // Alternate Sequence #
         seq_num = alternateNum(seq_num); 
@@ -115,8 +114,5 @@ void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAd
     printf("Number of data packets dropped due to loss: %d\n", packet_loss);
     printf("Number of data packets transmitted successfully: %d\n", packet_success);
     printf("Number of ACKs received: %d\n", ack_received);
-    printf("Count of how many times timeout expired: %d\n\n", count_timeout);
-
-    // Question: EOT also loss?
-    
+    printf("Count of how many times timeout expired: %d\n\n", count_timeout);   
 }

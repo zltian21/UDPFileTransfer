@@ -1,10 +1,10 @@
 /*
     Server.c 
-    
+    UDP Server
 */
-#include <stdio.h> /*for printf() and fprintf()*/
-#include <sys/socket.h> /*for socket(), connect(), send(), and recv()*/
-#include <arpa/inet.h> /*for sockaddr_in and inet_addr()*/
+#include <stdio.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -12,13 +12,13 @@
 #include <math.h>
 #include "packet.h"
 
-
 void DieWithError(char *errorMessage);
 void HandleClient(int servSocket, struct sockaddr_in clntAdd, unsigned int clnAddrLen, struct packet filePkt, float lossRatio);
 
 int main(int argc, char *argv[]) {
     srand((unsigned int)time(NULL));
     
+    /* Attributes */
     int sock;                           // Socket
     struct sockaddr_in servAddr;        // Server address
     struct sockaddr_in clntAddr;        // Client address
@@ -28,24 +28,23 @@ int main(int argc, char *argv[]) {
     float pktLossRatio;                 // Packet Loss Ratio
     int recvPktSize;                    // Size of received packet
     struct packet pkt_buff;             // packet buffer
-    struct timeval tv;                      // Time interval
-    long micro_t_out;      // Time in microseconds
-    time_t sec_t_out;
-    printf("Initiating Server...\n");
+    struct timeval tv;                  // Time interval
+    long micro_t_out;                   // Time in microseconds
+    time_t sec_t_out;                   // Time in second
 
+    /* Check command line input */
     if (argc != 4) {
         fprintf(stderr, "Usage: %s <Server Port> <Time Out> <Packet Loss Ratio>\n", argv[0]) ;
 		exit(1);
     }
+    printf("Initiating Server...\n");
 
     /* Assign values*/
     servPort = atoi(argv[1]);
     timeOut = pow(10, atoi(argv[2]));
     pktLossRatio = atof(argv[3]);
-    
     sec_t_out = timeOut/1000000;
     micro_t_out = timeOut - sec_t_out*1000000;
-    
     tv.tv_sec = sec_t_out;
     tv.tv_usec = micro_t_out; 
 
@@ -65,18 +64,20 @@ int main(int argc, char *argv[]) {
     
     /* Run forever*/
     for (;;) {
-        /* Set the size of the in-out parameter */
+        // Set the size of the in-out parameter
         cliAddrLen = sizeof(clntAddr);
 
+        // Receive filename packet
         if ((recvPktSize = recvfrom(sock, &pkt_buff, PKTSIZE, 0, (struct sockaddr *) &clntAddr, &cliAddrLen)) < 0) {
-            printf("HERE: %d\n", recvPktSize);
             DieWithError("filename recvfrom() failed");
         }
 
+        // Set receive timeout
         if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,&tv,sizeof(tv)) < 0) {
             perror("setsockopt() Error");
         }
-        // printf("NMSL: %s\n", pkt_buff->data);
+
+        // Handle file transfer
         HandleClient(sock, clntAddr, cliAddrLen, pkt_buff, pktLossRatio);
         close(sock);
 	    exit(0);
